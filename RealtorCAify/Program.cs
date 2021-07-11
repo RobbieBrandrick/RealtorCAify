@@ -1,7 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Web;
+using Newtonsoft.Json;
+using RealtorCAify.Data;
+using RealtorCAify.Models;
 using RestSharp;
 
 namespace RealtorCAify
@@ -12,104 +17,141 @@ namespace RealtorCAify
 
         static async Task Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            var result = await GetListings();
 
+            await SaveListings(result);
+        }
 
+        private static async Task SaveListings(RealtorResponseDto results)
+        {
+            List<Listing> listings = new List<Listing>();
+            
+            foreach (var result in results.Results)
+            {
+                var listing = new Listing()
+                {
+                    Price = result?.Property?.Price ?? "",
+                    AddressText = result?.Property?.Address?.AddressText ?? "",
+                    MlsNumber = result?.MlsNumber ?? "",
+                    ResultDtoId = result?.Id,
+                    BathroomTotal = result?.Building?.BathroomTotal ?? "",
+                    Bedrooms = result?.Building?.Bedrooms ?? "",
+                    SizeInterior = result?.Building?.SizeInterior ?? "",
+                    StoriesTotal = result?.Building?.StoriesTotal ?? "",
+                    Type = result?.Building?.Type ?? "",
+                    Ammenities = result?.Building?.Ammenities ?? "",
+                    SizeTotal = result?.Land?.SizeTotal ?? "",
+                    SizeFrontage = result?.Land?.SizeFrontage ?? "",
+                    AccessType = result?.Land?.AccessType ?? "",
+                    PostalCode = result?.PostalCode ?? "",
+                    PropertyDescription = result?.PublicRemarks ?? "",
+                    RealtorName = result?.Individual?.FirstOrDefault()?.Name ?? "",
+                    DetailsUrl = result?.RelativeDetailsURL,
+                };
+                
+                listings.Add(listing);
+            }
+            
+            await using RealtorCAifyDbContext dbContext = new RealtorCAifyDbContext();
+            await dbContext.Listings.AddRangeAsync(listings);
+            await dbContext.SaveChangesAsync();
+        }
+
+        private static async Task<RealtorResponseDto> GetListings()
+        {
             var client = new RestClient(BaseUrl);
 
-            RestRequest restRequest = new RestRequest("/Listing.svc/PropertySearch_Post", Method.POST);
+            RestRequest request = new RestRequest("/Listing.svc/PropertySearch_Post", Method.POST);
 
-            SetupRequestHeaders(restRequest);
+            SetupRequestHeaders(request);
 
-            SetupRequestBody(restRequest);
+            SetupRequestBody(request);
 
-            var result = await client.ExecutePostAsync(restRequest);
+            IRestResponse<RealtorResponseDto> response = await client.ExecutePostAsync<RealtorResponseDto>(request);
 
+            await SaveApiTransaction(client, request, response);
 
-            //
-            // var root = @"https://www.realtor.ca";
-            // var html = @"https://www.realtor.ca/map#ZoomLevel=11&Center=48.402436%2C-89.236990&LatitudeMax=48.55060&LongitudeMax=-88.77488&LatitudeMin=48.25384&LongitudeMin=-89.69910&view=list&CurrentPage=2&Sort=1-D&PGeoIds=g30_f08e2tde&GeoName=Thunder%20Bay%2C%20ON&PropertyTypeGroupID=1&PropertySearchTypeId=1&TransactionTypeId=2&PriceMin=200000&PriceMax=450000&Currency=CAD";
-            //
-            // var web = new HtmlWeb();
-            // var doc = web.Load(html);
-            // var iframes = doc.DocumentNode.SelectNodes("//iframe[@src]");
-            // foreach (var iframe in iframes)
-            // {
-            //     var iframeUrl = iframe.Attributes["src"].Value;
-            //
-            //     if (iframeUrl.StartsWith("/"))
-            //     {
-            //         iframeUrl = root + iframeUrl;
-            //     }
-            //
-            //     //string noSrcOuterHTML = iframe.OuterHtml.Replace("src=" + "\"" + iframeUrl + "\"", string.Empty);
-            //
-            //     var iframeContent = web.Load(iframeUrl);
-            //     var clonedIframe = HtmlNode.CreateNode(iframeContent.DocumentNode.InnerHtml);
-            //         
-            //     var parent = iframe.ParentNode;
-            //     iframe.ParentNode.ReplaceChild(clonedIframe, iframe);
-            //
-            //     //iframe.InnerHtml = iframeDocument.DocumentNode.InnerHtml;
-            // }
-            // var outerHtml = doc.DocumentNode.OuterHtml;            
-            //
-            // // HtmlWeb web = new HtmlWeb();
-            // //
-            // // var doc = await web.LoadFromWebAsync(html);
-            // //
-            // //
-            // // HtmlNodeCollection nodes = doc.DocumentNode.SelectNodes("//iframe[@src]");
-            // //
-            // //
-            // // foreach(var node in nodes){
-            // //     HtmlAttribute attr = node.Attributes["src"];
-            // //     Console.WriteLine(attr.Value);
-            // // }  
+            RealtorResponseDto result = response.Data;
+            return result;
+        }
+
+        private static async Task SaveApiTransaction(RestClient client, RestRequest request,
+            IRestResponse<RealtorResponseDto> response)
+        {
+            var requestToLog = new
+            {
+                resource = request.Resource,
+                // Parameters are custom anonymous objects in order to have the parameter type as a nice string
+                // otherwise it will just show the enum value
+                parameters = request.Parameters.Select(parameter => new
+                {
+                    name = parameter.Name,
+                    value = parameter.Value,
+                    type = parameter.Type.ToString()
+                }),
+                // ToString() here to have the method as a nice string otherwise it will just show the enum value
+                method = request.Method.ToString(),
+                // This will generate the actual Uri used in the request
+                uri = client.BuildUri(request),
+            };
+
+            var responseToLog = new
+            {
+                statusCode = response.StatusCode,
+                content = response.Content,
+                headers = response.Headers,
+                // The Uri that actually responded (could be different from the requestUri if a redirection occurred)
+                responseUri = response.ResponseUri,
+                errorMessage = response.ErrorMessage,
+            };
+
+            await using RealtorCAifyDbContext dbContext = new RealtorCAifyDbContext();
+            await dbContext.ApiTransactions.AddAsync(new ApiTransaction()
+            {
+                Resource = request.Resource,
+                Request = JsonConvert.SerializeObject(requestToLog),
+                Response = JsonConvert.SerializeObject(responseToLog),
+                CreateDate = DateTime.Now
+            });
+            await dbContext.SaveChangesAsync();
         }
 
         private static void SetupRequestBody(RestRequest restRequest)
         {
-            var requestParameters = new Dictionary<string, Object>();
-
-            requestParameters.Add("CultureId", 1);
-            requestParameters.Add("ApplicationId", 37);
-            var existingUrlParameters = HttpUtility.ParseQueryString("");
-
-            foreach (string parameterKey in existingUrlParameters.Keys)
+            RealtorRequestDto requestDto = new RealtorRequestDto()
             {
-                requestParameters.Add(parameterKey, existingUrlParameters[parameterKey] ?? "");
-            }
+                CultureId = 1,
+                ApplicationId = 37,
+                ZoomLevel = "11",
+                Center = "Center=48.402436%2C-89.236990",
+                LatitudeMax = "48.54560",
+                LatitudeMin = "48.25886",
+                LongitudeMax = "-88.91392",
+                LongitudeMin = "-89.56006",
+                view = "list",
+                Sort = "1-D",
+                PGeoIds = "=g30_f08e2tde",
+                GeoName = "Thunder%20Bay%2C%20ON",
+                PropertyTypeGroupID = "1",
+                PropertySearchTypeId = "1",
+                TransactionTypeId = "2",
+                PriceMin = "200000",
+                PriceMax = "450000",
+                Currency = "CAD",
+                RecordsPerPage = "500",
+            };
 
-            foreach (var parameter in requestParameters)
+            foreach (var property in requestDto.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
-                restRequest.AddParameter(parameter.Key, parameter.Value, ParameterType.GetOrPost);
+                restRequest.AddParameter(property.Name, property.GetValue(requestDto) ?? "", ParameterType.GetOrPost);
             }
         }
-
-        // private static void SetupRequestBody(RestRequest restRequest)
-        // {
-        //     var requestBody = new ExpandoObject() as IDictionary<string, Object>;;
-        //
-        //     requestBody.Add("CultureId", 1);
-        //     requestBody.Add("ApplicationId", 37);
-        //     var parameters = HttpUtility.ParseQueryString(
-        //
-        //     foreach (string parameterKey in parameters.Keys)
-        //     {
-        //         requestBody.Add(parameterKey, parameters[parameterKey] ?? "");
-        //     }
-        //
-        //     string requestBodyJson = JsonConvert.SerializeObject(requestBody);
-        //
-        //     restRequest.AddJsonBody(requestBodyJson);
-        // }
 
         private static void SetupRequestHeaders(RestRequest restRequest)
         {
             restRequest.AddHeader("Host", "api2.realtor.ca");
             restRequest.AddHeader("User-Agent",
-                "");
+                "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:88.0) Gecko/20100101 Firefox/88.0");
             restRequest.AddHeader("Accept", "*/*");
             restRequest.AddHeader("Accept-Language", "en-CA,en-US;q=0.7,en;q=0.3");
             restRequest.AddHeader("Accept-Encoding", "gzip, deflate, br");
@@ -119,8 +161,7 @@ namespace RealtorCAify
             restRequest.AddHeader("DNT", "1");
             restRequest.AddHeader("Connection", "keep-alive");
             restRequest.AddHeader("Referer", "https://www.realtor.ca/");
-            restRequest.AddHeader("Cookie",
-                "");
+            restRequest.AddHeader("Cookie", "");
             restRequest.AddHeader("Pragma", "no-cache");
             restRequest.AddHeader("Cache-Control", "no-cache");
             restRequest.AddHeader("TE", "Trailers");
