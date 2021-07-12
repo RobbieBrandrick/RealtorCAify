@@ -34,6 +34,9 @@ namespace RealtorCAify.Migrations
                     b.Property<string>("Response")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ResponseContent")
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
                     b.ToTable("ApiTransactions");
@@ -60,10 +63,19 @@ namespace RealtorCAify.Migrations
                     b.Property<string>("Bedrooms")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime>("CreateDate")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("DetailsUrl")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("MlsNumber")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ParkingType")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PhotoChangeDateUTC")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PostalCode")

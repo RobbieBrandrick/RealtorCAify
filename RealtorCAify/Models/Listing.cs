@@ -1,8 +1,11 @@
+using System;
+
 namespace RealtorCAify.Models
 {
     public class Listing
     {
         public int Id { get; set; }
+        public DateTime CreateDate { get; set; }
         
         public string Price { get; set; }
         public string AddressText { get; set; }
@@ -21,5 +24,7 @@ namespace RealtorCAify.Models
         public string RealtorName { get; set; }
         public string PropertyDescription { get; set; }
         public string DetailsUrl { get; set; }
+        public string ParkingType { get; set; }
+        public string PhotoChangeDateUTC { get; set; }
     }
 }

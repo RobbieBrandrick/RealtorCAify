@@ -9,8 +9,8 @@ using RealtorCAify.Data;
 namespace RealtorCAify.Migrations
 {
     [DbContext(typeof(RealtorCAifyDbContext))]
-    [Migration("20210711210222_initial")]
-    partial class initial
+    [Migration("20210712122250_Initial")]
+    partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -34,6 +34,9 @@ namespace RealtorCAify.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Response")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ResponseContent")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -62,10 +65,19 @@ namespace RealtorCAify.Migrations
                     b.Property<string>("Bedrooms")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime>("CreateDate")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("DetailsUrl")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("MlsNumber")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ParkingType")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PhotoChangeDateUTC")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PostalCode")

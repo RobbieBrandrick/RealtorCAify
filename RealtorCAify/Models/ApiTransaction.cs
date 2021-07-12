@@ -9,5 +9,6 @@ namespace RealtorCAify.Models
         public string Resource { get; set; }
         public string Request { get; set; }
         public string Response { get; set; }
+        public string ResponseContent { get; set; }
     }
 }

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace RealtorCAify.Migrations
 {
-    public partial class initial : Migration
+    public partial class Initial : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -16,7 +16,8 @@ namespace RealtorCAify.Migrations
                     CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false),
                     Resource = table.Column<string>(type: "TEXT", nullable: true),
                     Request = table.Column<string>(type: "TEXT", nullable: true),
-                    Response = table.Column<string>(type: "TEXT", nullable: true)
+                    Response = table.Column<string>(type: "TEXT", nullable: true),
+                    ResponseContent = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -29,6 +30,7 @@ namespace RealtorCAify.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
+                    CreateDate = table.Column<DateTime>(type: "TEXT", nullable: false),
                     Price = table.Column<string>(type: "TEXT", nullable: true),
                     AddressText = table.Column<string>(type: "TEXT", nullable: true),
                     MlsNumber = table.Column<string>(type: "TEXT", nullable: true),
@@ -45,7 +47,9 @@ namespace RealtorCAify.Migrations
                     PostalCode = table.Column<string>(type: "TEXT", nullable: true),
                     RealtorName = table.Column<string>(type: "TEXT", nullable: true),
                     PropertyDescription = table.Column<string>(type: "TEXT", nullable: true),
-                    DetailsUrl = table.Column<string>(type: "TEXT", nullable: true)
+                    DetailsUrl = table.Column<string>(type: "TEXT", nullable: true),
+                    ParkingType = table.Column<string>(type: "TEXT", nullable: true),
+                    PhotoChangeDateUTC = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {

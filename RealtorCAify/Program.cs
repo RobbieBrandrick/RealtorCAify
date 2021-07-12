@@ -30,7 +30,9 @@ namespace RealtorCAify
             {
                 var listing = new Listing()
                 {
-                    Price = result?.Property?.Price ?? "",
+                    CreateDate = DateTime.Now,
+                    Price = result?.Property?.PriceUnformattedValue ?? "",
+                    ParkingType = result?.Property?.ParkingType ?? "", 
                     AddressText = result?.Property?.Address?.AddressText ?? "",
                     MlsNumber = result?.MlsNumber ?? "",
                     ResultDtoId = result?.Id,
@@ -46,7 +48,8 @@ namespace RealtorCAify
                     PostalCode = result?.PostalCode ?? "",
                     PropertyDescription = result?.PublicRemarks ?? "",
                     RealtorName = result?.Individual?.FirstOrDefault()?.Name ?? "",
-                    DetailsUrl = result?.RelativeDetailsURL,
+                    DetailsUrl = result?.RelativeDetailsURL ?? "",
+                    PhotoChangeDateUTC = result?.PhotoChangeDateUTC ?? "",
                 };
                 
                 listings.Add(listing);
@@ -111,6 +114,7 @@ namespace RealtorCAify
                 Resource = request.Resource,
                 Request = JsonConvert.SerializeObject(requestToLog),
                 Response = JsonConvert.SerializeObject(responseToLog),
+                ResponseContent = response?.Content ?? "",
                 CreateDate = DateTime.Now
             });
             await dbContext.SaveChangesAsync();
