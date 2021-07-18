@@ -1,3 +1,4 @@
+
 SELECT DISTINCT
     L1.MlsNumber
               , 'realtor.ca' || L1.DetailsUrl
@@ -32,4 +33,4 @@ WHERE
       AND DATE(L3.CreateDate) = DATE('now')
 )
 ORDER BY
-    L2.Price DESC
+	L1.AddressText
