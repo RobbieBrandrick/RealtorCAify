@@ -1,0 +1,1 @@
+SELECT * FROM Listings WHERE MlsNumber = "TB211727"; --105 Spruce
