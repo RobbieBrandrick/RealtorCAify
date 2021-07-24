@@ -8,3 +8,4 @@ riderModule.iml
 /crontab/log
 .idea/
 *.db
+RealtorCAify/Deployment/*
